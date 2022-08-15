@@ -120,13 +120,23 @@ func (h *handlerProduct) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	dataContex := r.Context().Value("dataFile") // add this code
 	filename := dataContex.(string)             // add this code
 
-	request := new(productdto.ProductRequest)
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+	price, _ := strconv.Atoi(r.FormValue("price"))
+
+	request := productdto.ProductRequest{
+		Title: 		r.FormValue("title"),
+		Price:  	price,    
+		Image:      filename,
+	}
+
+	validation := validator.New()
+	err := validation.Struct(request)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
+
 
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 	product, err := h.ProductRepository.GetProduct(int(id))
@@ -137,20 +147,14 @@ func (h *handlerProduct) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if request.Title != "" {
-		product.Title = request.Title
-	}
-
-	if request.Price != 0 {
-		product.Price = request.Price
-	}
-
-	if filename != "" {
+	product.Title = request.Title
+	product.Price = request.Price
+	
+	if filename != "false" {
 		product.Image = filename
 	}
 
-
-	data, err := h.ProductRepository.UpdateProduct(product)
+	product, err = h.ProductRepository.UpdateProduct(product)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
@@ -159,8 +163,8 @@ func (h *handlerProduct) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Code: http.StatusOK, Data: convertResponseProduct(data)}
-	json.NewEncoder(w).Encode(response)
+	response := dto.SuccessResult{Code: http.StatusOK, Data: product}
+	json.NewEncoder(w).Encode(response)	
 }
 
 func (h *handlerProduct) DeleteProduct(w http.ResponseWriter, r *http.Request) {
