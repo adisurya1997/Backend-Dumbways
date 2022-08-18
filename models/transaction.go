@@ -4,11 +4,11 @@ import "time"
 
 type Transaction struct {
 	ID             int                	     `json:"id" gorm:"primary_key:auto_increment"`
-	BuyerID   	   int                 		 `json:"buyer_id"`
-	Buyer     	   UsersProfileResponse 	 `json:"buyer"`
+	UserID   	   int                 		 `json:"user_id"`
+	User     	   UsersProfileResponse 	 `json:"user"`
 	Carts          []CartResponse            `json:"carts"`
 	Amount    	   int               	     `json:"Amount"`
-	Status         string           	     `json:"status"  gorm:"type:varchar(25)"`
+	Status         string           	     `json:"status" gorm:"type:varchar(25)"`
 	CreatedAt      time.Time          	     `json:"-"`
 	UpdatedAt      time.Time            	 `json:"-"`
 }
@@ -16,9 +16,19 @@ type Transaction struct {
 
 type TransactionResponse struct {
 	ID   	 int    `json:"id"`
-	BuyerID  int    `json:"buyer_id"`
+	UserID  int    `json:"user_id"`
+}
+
+type TransactionUserResponse struct {
+	ID   	 	   int    			`json:"id"`
+	Amount    	   int              `json:"Amount"`
+	Status         string           `json:"status"`
 }
 
 func (TransactionResponse) TableName() string {
+	return "transactions"
+}
+
+func (TransactionUserResponse) TableName() string {
 	return "transactions"
 }
